@@ -2,10 +2,11 @@ import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ShopContext } from "../context/ShopContext";
 import { assets } from "../assets/assets";
+import RelatedProducts from "../components/RelatedProducts";
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency } = useContext(ShopContext);
+  const { products, currency , addToCart } = useContext(ShopContext);
   const [productData, setProductData] = useState(false);
   const [image, setImage] = useState();
   const [size, setSize] = useState("");
@@ -77,7 +78,7 @@ const Product = () => {
               ))}
             </div>
           </div>
-          <button className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700">
+          <button onClick={()=>addToCart(productData._id,size)} className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700">
             ADD TO CART
           </button>
           <hr className="mt-8 sm:w-4/5" />
@@ -86,7 +87,7 @@ const Product = () => {
             <p>Cash on delivery is available on this product.</p>
             <p>Easy return and exchange policy within 7 days.</p>
           </div>
-          5
+          
         </div>
       </div>
       {/* --------------Description and review section--------------*/}
@@ -117,7 +118,7 @@ const Product = () => {
         </div>
       </div>
       {/* related products */}
-      
+      <RelatedProducts category={productData.category} subCategory={ productData.subCategory}/>
     </div>
   ) : (
     <div className="opacity-0"></div>
