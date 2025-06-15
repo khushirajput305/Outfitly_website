@@ -1,66 +1,86 @@
-import { createContext } from "react";
-import { products } from "../assets/assets";
-export const ShopContext = createContext({});
-import React, { useState } from "react";
+import React, { createContext, useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import {useNavigate} from "react-router-dom";
+//import { products } from "../assets/assets";
+import axios from "axios";
+import { BackendUrl } from "../../config";
+
+// Create the context
+export const ShopContext = createContext({});
+
 const ShopContextProvider = ({ children }) => {
   const currency = "₹";
   const delivery_fee = 10;
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [cartItems, setCartItems] = useState({});
+  const [products , setProducts] = useState('')
   const navigate = useNavigate();
 
-  const addToCart = async (itemId, size) => {
+  // Add to cart logic
+  const addToCart = (itemId, size) => {
     if (!size) {
-      toast.error("Select product size");
+      toast.error("Please select a product size");
       return;
     }
-    let cartData = structuredClone(cartItems);
-    if (cartData[itemId]) {
+
+    setCartItems((prevCart) => {
+      const cartData = structuredClone(prevCart);
+
+      if (!cartData[itemId]) cartData[itemId] = {};
       if (cartData[itemId][size]) {
         cartData[itemId][size] += 1;
       } else {
         cartData[itemId][size] = 1;
       }
-    } else {
-      cartData[itemId] = {};
-      cartData[itemId][size] = 1;
-    }
-    setCartItems(cartData);
+
+      return cartData;
+    });
   };
 
+  // Get total item count in cart
   const getCartCount = () => {
     let totalCount = 0;
-    for (const items in cartItems) {
-      for (const item in cartItems[items]) {
-        try {
-          if (cartItems[items][item] > 0) {
-            totalCount += cartItems[items][item];
-          }
-        } catch (error) {}
+    for (const itemId in cartItems) {
+      for (const size in cartItems[itemId]) {
+        const quantity = cartItems[itemId][size];
+        if (quantity > 0) {
+          totalCount += quantity;
+        }
       }
     }
     return totalCount;
   };
 
-  const updateQuantity = async (itemId, size, quantity) => {
-    let cartData = structuredClone(cartItems);
-    cartData[itemId][size] = quantity;
-    setCartItems(cartData);
+  // Update quantity of a product
+  const updateQuantity = (itemId, size, quantity) => {
+    setCartItems((prevCart) => {
+      const cartData = structuredClone(prevCart);
+
+      if (!cartData[itemId]) cartData[itemId] = {};
+
+      if (quantity <= 0) {
+        delete cartData[itemId][size];
+        if (Object.keys(cartData[itemId]).length === 0) {
+          delete cartData[itemId];
+        }
+      } else {
+        cartData[itemId][size] = quantity;
+      }
+
+      return cartData;
+    });
   };
 
+  // Calculate total cart amount
   const getCartAmount = () => {
     let totalAmount = 0;
 
     for (const productId in cartItems) {
       const itemInfo = products.find((product) => product._id === productId);
-
       if (!itemInfo) continue;
 
       const sizes = cartItems[productId];
-
       for (const size in sizes) {
         const quantity = sizes[size];
         if (quantity > 0) {
@@ -72,7 +92,34 @@ const ShopContextProvider = ({ children }) => {
     return totalAmount;
   };
 
-  const value = {
+  const getProductData = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+
+    const response = await axios.post(
+      BackendUrl + "/api/product/list",
+             {},
+            {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+    );
+    console.log(response.data);
+    setProducts(response.data.message)
+  } catch (error) {
+    console.log("Error fetching product data:", error);
+  }
+};
+
+
+  useEffect(()=>{
+    getProductData()
+  },[])
+
+  // Memoized value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
     products,
     currency,
     delivery_fee,
@@ -85,8 +132,15 @@ const ShopContextProvider = ({ children }) => {
     getCartCount,
     updateQuantity,
     getCartAmount,
-    navigate
-  };
-  return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
+    navigate,
+    BackendUrl
+  }), [search, showSearch, cartItems]);
+
+  return (
+    <ShopContext.Provider value={value}>
+      {children}
+    </ShopContext.Provider>
+  );
 };
+
 export default ShopContextProvider;

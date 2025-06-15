@@ -29,49 +29,43 @@ const Collection = () => {
   };
 
   const applyFilter = () => {
-    let productsCopy = products.slice();
-    if (showSearch && search) {
-      productsCopy = productsCopy.filter((item) =>
-        item.name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-    if (category.length > 0) {
-      productsCopy = productsCopy.filter((item) =>
-        category.includes(item.category)
-      );
-    }
-    if (subCategory.length > 0) {
-      productsCopy = productsCopy.filter((item) =>
-        subCategory.includes(item.subCategory)
-      );
-    }
-    setFilterProducts(productsCopy);
-  };
+  let productsCopy = products.slice();
 
-  const sortProduct = () => {
-    let fpCopy = filterProducts.slice();
-    switch (sortType) {
-      case "low-high":
-        setFilterProducts(fpCopy.sort((a, b) => a.price - b.price));
-        break;
+  if (showSearch && search) {
+    productsCopy = productsCopy.filter((item) =>
+      item.name.toLowerCase().includes(search.trim().toLowerCase())
+    );
+  }
+  if (category.length > 0) {
+    productsCopy = productsCopy.filter((item) =>
+      category.includes(item.category)
+    );
+  }
+  if (subCategory.length > 0) {
+    productsCopy = productsCopy.filter((item) =>
+      subCategory.includes(item.subCategory)
+    );
+  }
 
-      case "high-low":
-        setFilterProducts(fpCopy.sort((a, b) => b.price - a.price));
-        break;
-
-      default:
-        applyFilter();
-        break;
+ setFilterProducts(() => {
+    let sortedProducts = productsCopy;
+    if (sortType === "low-high") {
+      sortedProducts = productsCopy.sort((a, b) => a.price - b.price);
+    } else if (sortType === "high-low") {
+      sortedProducts = productsCopy.sort((a, b) => b.price - a.price);
     }
-  };
+    return sortedProducts;
+  });
+};
+  useEffect(() => {
+    applyFilter();
+  }, [products]);
 
   useEffect(() => {
     applyFilter();
-  }, [category, subCategory , search , showSearch]);
+  }, [category, subCategory, search, showSearch ,sortType]);
 
-  useEffect(() => {
-    sortProduct();
-  }, [sortType]);
+
 
   return (
     <div className="flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t">
@@ -169,7 +163,7 @@ const Collection = () => {
           {/* product sort*/}
           <select
             onChange={(e) => setSortType(e.target.value)}
-            className="border-2 border-gay-300 text-sm px-2"
+            className="border-2 border-gray-300 text-sm px-2"
           >
             <option value="relevant">Sort by: Relevant</option>
             <option value="low-high">Sort by:Low to High</option>
@@ -178,15 +172,18 @@ const Collection = () => {
         </div>
         {/* Map products */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
-          {filterProducts.map((item, index) => (
-            <ProductItem
-              key={index}
-              id={item._id}
-              image={item.image}
-              name={item.name}
-              price={item.price}
-            />
-          ))}
+          {Array.isArray(filterProducts) &&
+  filterProducts.map((item, index) => (
+    <ProductItem
+      key={index}
+      id={item._id}
+      image={item.image}
+      name={item.name}
+      price={item.price}
+    />
+))}
+
+        
         </div>
       </div>
     </div>
