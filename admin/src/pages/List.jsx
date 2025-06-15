@@ -8,7 +8,7 @@ const List = ({ token }) => {
   const [list, setList] = useState([]);
   const fetchList = async () => {
     try {
-      const response = await axios.post(
+      const response = await axios.get(
         BackendUrl + "/api/product/list",
         {},
         {

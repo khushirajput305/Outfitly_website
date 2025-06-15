@@ -97,12 +97,12 @@ const ShopContextProvider = ({ children }) => {
     const token = localStorage.getItem("token");
 
 
-    const response = await axios.post(
+    const response = await axios.get(
       BackendUrl + "/api/product/list",
              {},
             {
     headers: {
-      Authorization: `Bearer ${token}`,
+      token,
     },
   }
     );
