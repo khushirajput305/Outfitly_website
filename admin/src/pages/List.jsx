@@ -18,6 +18,7 @@ const List = ({ token }) => {
         }
       );
       if (response.data.success) {
+        
         setList(response.data.products);
       } else {
         toast.error(response.data.message);

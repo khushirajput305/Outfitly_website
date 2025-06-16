@@ -1,20 +1,26 @@
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
-const adminAuth = async(req,res ,next)=>{
-    try {
-        const {token} = req.headers
-        if(!token){
-            return res.json({success:false , message:"not authorised login again"})
-        }
-        const token_decode = jwt.verify(token,process.env.JWT_SECRET);
-        if(token_decode !== process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD){
-            return res.json({success:false , message:"not authorized login again"})
-        }
-        next()
-    } catch (error) {
-       console.log(error) 
-       res.json({success:false , message:error.message})
+const adminAuth = async (req, res, next) => {
+  try {
+  const token = req.headers.token; 
+
+    if (!token) {
+      return res.json({ success: false, message: "Not authorised, login again" });
     }
+
+    // 🛠 Fix: Decode must match how the token was signed
+   const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+// Check for admin role or specific email
+if (decoded.email !== process.env.ADMIN_EMAIL || decoded.role !== 'admin') {
+  return res.status(403).json({ success: false, message: "Not authorized" });
 }
 
-export default adminAuth
+    next();
+  } catch (error) {
+    console.log("Admin Auth Error:", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export default adminAuth;

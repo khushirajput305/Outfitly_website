@@ -95,17 +95,14 @@ const ShopContextProvider = ({ children }) => {
   const getProductData = async () => {
   try {
     const token = localStorage.getItem("token");
+    
 
+    const response = await axios.get(BackendUrl + "/api/product/list", {
+  headers: {
+    token: token,
+  },
+});
 
-    const response = await axios.get(
-      BackendUrl + "/api/product/list",
-             {},
-            {
-    headers: {
-      token,
-    },
-  }
-    );
     console.log(response.data);
     setProducts(response.data.message)
   } catch (error) {
