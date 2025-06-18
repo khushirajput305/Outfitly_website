@@ -92,28 +92,35 @@ const ShopContextProvider = ({ children }) => {
     return totalAmount;
   };
 
-  const getProductData = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    
+   const getProductData = async () => {
+    try {
+      const token = localStorage.getItem("token"); // ✅ Get token from localStorage
+      if (!token) {
+        toast.error("Token not found. Please login again.");
+        return;
+      }
 
-    const response = await axios.get(BackendUrl + "/api/product/list", {
-  headers: {
-    token: token,
-  },
-});
+      const response = await axios.get(`${BackendUrl}/api/product/list`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Send token in correct format
+        },
+      });
 
-    console.log(response.data);
-    setProducts(response.data.message)
-  } catch (error) {
-    console.log("Error fetching product data:", error);
-  }
-};
+      if (response.data.success) {
+        setProducts(response.data.message);
+      } else {
+        toast.error(response.data.message || "Something went wrong");
+      }
 
+    } catch (error) {
+      console.error("Error fetching products:", error.message);
+      toast.error("Error fetching products");
+    }
+  };
 
-  useEffect(()=>{
-    getProductData()
-  },[])
+  useEffect(() => {
+    getProductData();
+  }, []);
 
   // Memoized value to prevent unnecessary re-renders
   const value = useMemo(() => ({
