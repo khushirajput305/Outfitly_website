@@ -1,11 +1,8 @@
 import React, { createContext, useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-//import { products } from "../assets/assets";
-import axios from "axios";
-import { BackendUrl } from "../../config";
+import {products} from '../assets/assets'
 
-// Create the context
 export const ShopContext = createContext({});
 
 const ShopContextProvider = ({ children }) => {
@@ -14,7 +11,9 @@ const ShopContextProvider = ({ children }) => {
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [cartItems, setCartItems] = useState({});
-  const [products , setProducts] = useState('')
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [token , setToken] = useState('')
   const navigate = useNavigate();
 
   // Add to cart logic
@@ -76,6 +75,8 @@ const ShopContextProvider = ({ children }) => {
   const getCartAmount = () => {
     let totalAmount = 0;
 
+    if (!Array.isArray(products)) return totalAmount;
+
     for (const productId in cartItems) {
       const itemInfo = products.find((product) => product._id === productId);
       if (!itemInfo) continue;
@@ -92,59 +93,36 @@ const ShopContextProvider = ({ children }) => {
     return totalAmount;
   };
 
-   const getProductData = async () => {
-    try {
-      const token = localStorage.getItem("token"); // ✅ Get token from localStorage
-      if (!token) {
-        toast.error("Token not found. Please login again.");
-        return;
-      }
 
-      const response = await axios.get(`${BackendUrl}/api/product/list`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ Send token in correct format
-        },
-      });
 
-      if (response.data.success) {
-        setProducts(response.data.message);
-      } else {
-        toast.error(response.data.message || "Something went wrong");
-      }
+    
+   
+ 
 
-    } catch (error) {
-      console.error("Error fetching products:", error.message);
-      toast.error("Error fetching products");
-    }
-  };
-
-  useEffect(() => {
-    getProductData();
-  }, []);
-
-  // Memoized value to prevent unnecessary re-renders
-  const value = useMemo(() => ({
-    products,
-    currency,
-    delivery_fee,
-    search,
-    setSearch,
-    showSearch,
-    setShowSearch,
-    cartItems,
-    addToCart,
-    getCartCount,
-    updateQuantity,
-    getCartAmount,
-    navigate,
-    BackendUrl
-  }), [search, showSearch, cartItems]);
-
-  return (
-    <ShopContext.Provider value={value}>
-      {children}
-    </ShopContext.Provider>
+  const value = useMemo(
+    () => ({
+      products,
+      currency,
+      delivery_fee,
+      search,
+      setSearch,
+      showSearch,
+      setShowSearch,
+      cartItems,
+      addToCart,
+      getCartCount,
+      updateQuantity,
+      getCartAmount,
+      navigate,
+      loading,
+      error,
+      setToken
+      
+    }),
+    [search, showSearch, cartItems, products, loading, error,token]
   );
+
+  return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
 };
 
 export default ShopContextProvider;

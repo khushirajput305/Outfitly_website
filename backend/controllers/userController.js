@@ -1,6 +1,8 @@
 import validator from "validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+//import createToken from "../utils/createToken.js";
+
 import userModel from "../models/userModel.js";
 
 const createToken = (id) => {
@@ -32,60 +34,48 @@ const loginUser = async (req, res) => {
 };
 
 // route for user registration
-const registerUser = async (req, res) => {
+ const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    //check user is already exist or not
+    let { name, email, password } = req.body;
+    name = name.trim();
+    email = email.trim().toLowerCase();
+
     const exists = await userModel.findOne({ email });
     if (exists) {
-      return res.json({ success: false, message: "User already exist" });
+      return res.status(400).json({ success: false, message: "User already exists" });
     }
-    //validating email format & strong password
+
     if (!validator.isEmail(email)) {
-      return res.json({
+      return res.status(400).json({ success: false, message: "Please enter a valid email" });
+    }
+
+    if (!validator.isStrongPassword(password)) {
+      return res.status(400).json({
         success: false,
-        message: "Please enter a valid email",
+        message: "Password must be at least 8 characters long and include a mix of uppercase, numbers, and symbols",
       });
     }
-    if (password.length < 8) {
-      return res.json({
-        success: false,
-        message: "Please enter a strong password",
-      });
-    }
-    //hashing user password
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = new userModel({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
+    const newUser = new userModel({ name, email, password: hashedPassword });
     const user = await newUser.save();
 
     const token = createToken(user._id);
-    res.json({ success: true, token });
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: { id: user._id, name: user.name, email: user.email },
+    });
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
-  }
-};
-//admin login
-const adminLogin = async (req, res) => {
-  try {
-    const {email , password}=req.body
-    if(email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD){
-      const token = jwt.sign(email+password , process.env.JWT_SECRET);
-      res.json({success:true , token})
-    }else{
-      res.json({success:false , message :"invalid credentials"})
-    }
-  } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
-  }
+  console.log("Register Error:", error); // This will show the real error
+  res.status(500).json({ success: false, message: error.message }); // expose reason
+}
+
 };
 
-export { loginUser, registerUser, adminLogin };
+
+
+export { loginUser, registerUser };
