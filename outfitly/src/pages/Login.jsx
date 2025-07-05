@@ -1,11 +1,11 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { ShopContext } from "../context/ShopContext";
 import { BACKEND_URL } from "../config";
 import axios from "axios";
 import { toast } from "react-toastify";
 
 const Login = () => {
-  const [currentState, setCurrentState] = useState("Sign Up");
+  const [currentState, setCurrentState] = useState("Login");
   const { token, setToken, navigate } = useContext(ShopContext);
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +35,7 @@ const Login = () => {
           setToken(response.data.token);
           localStorage.setItem("token", response.data.token);
           toast.success("Login Successful!");
-          navigate("/");
+          //navigate("/");
         } else {
           toast.error(response.data.message);
         }
@@ -45,6 +45,11 @@ const Login = () => {
       toast.error(error.message);
     }
   };
+  useEffect(()=>{
+    if(token){
+      navigate('/')
+    }
+  },[token])
 
   return (
     <form

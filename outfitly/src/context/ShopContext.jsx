@@ -1,7 +1,8 @@
 import React, { createContext, useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import {products} from '../assets/assets'
+import { products } from "../assets/assets";
+
 
 export const ShopContext = createContext({});
 
@@ -13,29 +14,31 @@ const ShopContextProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [token , setToken] = useState('')
+  const [token, setToken] = useState("");
   const navigate = useNavigate();
 
   // Add to cart logic
-  const addToCart = (itemId, size) => {
-    if (!size) {
-      toast.error("Please select a product size");
-      return;
+  const addToCart = async (itemId, size) => {
+  if (!size) {
+    toast.error("Please select a product size");
+    return;
+  }
+
+  setCartItems((prevCart) => {
+    const cartData = structuredClone(prevCart);
+
+    if (!cartData[itemId]) cartData[itemId] = {};
+    if (cartData[itemId][size]) {
+      cartData[itemId][size] += 1;
+    } else {
+      cartData[itemId][size] = 1;
     }
 
-    setCartItems((prevCart) => {
-      const cartData = structuredClone(prevCart);
+    return cartData; 
+  });
 
-      if (!cartData[itemId]) cartData[itemId] = {};
-      if (cartData[itemId][size]) {
-        cartData[itemId][size] += 1;
-      } else {
-        cartData[itemId][size] = 1;
-      }
-
-      return cartData;
-    });
-  };
+  
+};
 
   // Get total item count in cart
   const getCartCount = () => {
@@ -93,11 +96,12 @@ const ShopContextProvider = ({ children }) => {
     return totalAmount;
   };
 
-
-
-    
-   
- 
+   useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    if (savedToken) {
+      setToken(savedToken);
+    }
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -116,10 +120,10 @@ const ShopContextProvider = ({ children }) => {
       navigate,
       loading,
       error,
-      setToken
-      
+      token,
+      setToken,
     }),
-    [search, showSearch, cartItems, products, loading, error,token]
+    [search, showSearch, cartItems, products, loading, error, token]
   );
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
